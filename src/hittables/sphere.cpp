@@ -22,8 +22,7 @@ bool sphere::hit(const ray &r, double t_min, double t_max, hit_record &rec) cons
 
     rec.t = root;
     rec.p = r.ray_at(rec.t);
-    //rec.hit_object = static_cast<hittable*>(this);
-    //rec.normal = (rec.p - center) / radius;
+    rec.normal = (rec.p - center) / radius;
 
     return true;
 }

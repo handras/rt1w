@@ -4,6 +4,7 @@
 #include "SDL.h"
 
 #include "sphere.h"
+#include "scene.h"
 
 #define WIN_WIDTH 800
 #define WIN_HEIGHT 600
@@ -11,7 +12,8 @@
 void showImage(SDL_Renderer *renderer, SDL_Texture *texture, uint8_t *pixels);
 void renderRaytracedImage(uint8_t *pixels);
 void cleanUp();
-vec3 ray_color(ray);
+scene create_scene();
+vec3 ray_color(ray, scene &);
 
 int main(int argc, char **argv) {
     printf("Hello Andras!\n");
@@ -77,6 +79,8 @@ void renderRaytracedImage(uint8_t *pixels) {
     vec3 vertical = {0, viewport_height, 0};
     vec3 lower_left_corner = origin - horizontal / 2 - vertical / 2 - vec3({0, 0, focal_length});
 
+    scene s = create_scene();
+
     printf("Starting render... \n");
     for (int j = WIN_HEIGHT - 1; j >= 0; --j) {
         printf("Scanlines remaining: %d\t\t\r", j);
@@ -85,47 +89,43 @@ void renderRaytracedImage(uint8_t *pixels) {
             double v = (double)(j) / (WIN_HEIGHT - 1);
             vec3 dir = lower_left_corner + horizontal * u + vertical * v - origin;
             ray r{origin, dir};
-            vec3 pixel_color = ray_color(r);
-            pixels[(j * WIN_WIDTH + i) * 4 + 0] = pixel_color.r * 255.99f;
-            pixels[(j * WIN_WIDTH + i) * 4 + 1] = pixel_color.g * 255.99f;
-            pixels[(j * WIN_WIDTH + i) * 4 + 2] = pixel_color.b * 255.99f;
+            vec3 pixel_color = ray_color(r, s);
+            pixels[((WIN_HEIGHT -1 - j) * WIN_WIDTH + i) * 4 + 0] = pixel_color.r * 255.99f;
+            pixels[((WIN_HEIGHT -1- j) * WIN_WIDTH + i) * 4 + 1] = pixel_color.g * 255.99f;
+            pixels[((WIN_HEIGHT -1- j) * WIN_WIDTH + i) * 4 + 2] = pixel_color.b * 255.99f;
             pixels[(j * WIN_WIDTH + i) * 4 + 3] = 255;
         }
     }
     printf("\nFinished!\n");
 }
 
-double hit_sphere(const vec3 &center, double radius, ray &r) {
-    vec3 oc = r.orig - center;
-    auto a = r.dir.length_squared();
-    auto half_b = dot(oc, r.dir);
-    auto c = oc.length_squared() - radius * radius;
-    auto discriminant = half_b * half_b - a * c;
-
-    if (discriminant < 0) {
-        return -1.0;
-    } else {
-        return (-half_b - sqrt(discriminant)) / a;
-    }
-}
-
-vec3 ray_color(ray r) {
-    sphere s1(vec3({0, 0, -1}), 0.5);
+vec3 ray_color(ray r, scene &s) {
     hit_record rec;
-    if(s1.hit(r, 0, 100, rec)){
+    if (s.hit(r, 0, 10e8, rec)) {
         auto t = rec.t;
-        vec3 normal = r.ray_at(t) - s1.center;
+        vec3 normal = rec.normal;
         normal = normal.normalize();
-        return vec3({normal.x + 1, normal.y + 1, normal.z + 1}) / 2;
+        return (normal + vec3({1, 1, 1})) / 2;
     }
     vec3 unit_dir = r.dir.normalize();
     // vec3 c1 = {0.1f, 0.5f, 1.0f};
     // vec3 c2 = {0.3f, 0.2f, 0.8f};
-    vec3 c2 = {0.1f, 0.05f, 1.0f};
-    vec3 c1 = {0.1f, 1.0f, 0.08f};
+    vec3 c1 = {0.1f, 0.05f, 1.0f};
+    vec3 c2 = {0.1f, 1.0f, 0.08f};
     auto t = 0.5 * (unit_dir.y + 1);
     vec3 color = c1 * t + c2 * (1 - t);
     return color;
+}
+
+scene create_scene() {
+    auto s1 = new sphere(vec3({0, 0, -1.0}), 0.5);
+    auto s2 = new sphere(vec3({0, 0, -0.5}), 0.3);
+    auto s3 = new sphere(vec3({0, -100.5, -1.0}), 100);
+    scene s;
+    s.add(*s1);
+    s.add(*s2);
+    s.add(*s3);
+    return s;
 }
 
 void cleanUp() {

@@ -6,8 +6,8 @@
 class hittable;
 
 struct hit_record {
-    hittable *hit_object;
     vec3 p;
+    vec3 normal;
     double t;
 };
 
