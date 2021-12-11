@@ -13,37 +13,37 @@ typedef union vec3 {
         VEC3_IMPL_TYP r, g, b;
     };
 
-    vec3 operator+(const vec3 &u){
-        vec3 r={this->x + u.x, this->y + u.y, this->z + u.z};
+    vec3 operator+(const vec3 &u) const {
+        vec3 r = {this->x + u.x, this->y + u.y, this->z + u.z};
         return r;
     }
 
-    vec3 operator-(const vec3 &u){
-        vec3 r={this->x - u.x, this->y - u.y, this->z - u.z};
+    vec3 operator-(const vec3 &u) const {
+        vec3 r = {this->x - u.x, this->y - u.y, this->z - u.z};
         return r;
     }
 
-    vec3 operator*(const vec3 &u) {
+    vec3 operator*(const vec3 &u) const {
         vec3 r = {this->x * u.x, this->y * u.y, this->z * u.z};
         return r;
     }
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wnarrowing"
-    vec3 operator*(double u) {
+    vec3 operator*(double u) const {
         vec3 r = {this->x * u, this->y * u, this->z * u};
         return r;
     }
 
-    vec3 operator/(double u) {
+    vec3 operator/(double u) const {
         vec3 r = {this->x / u, this->y / u, this->z / u};
         return r;
     }
 #pragma GCC diagnostic pop
 
-    double length();
-    double length_squared();
-    vec3 normalize();
+    double length() const;
+    double length_squared() const;
+    vec3 normalize() const;
 
 } vec3;
 

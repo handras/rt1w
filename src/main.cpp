@@ -3,7 +3,7 @@
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
 
-#include "ray.h"
+#include "sphere.h"
 
 #define WIN_WIDTH 800
 #define WIN_HEIGHT 600
@@ -110,18 +110,20 @@ double hit_sphere(const vec3 &center, double radius, ray &r) {
 }
 
 vec3 ray_color(ray r) {
-    auto t = hit_sphere(vec3({0, 0, -1}), 0.5, r);
-    if (t > 0.0) {
-        vec3 normal = r.ray_at(t) - vec3({0, 0, -1});
+    sphere s1(vec3({0, 0, -1}), 0.5);
+    hit_record rec;
+    if(s1.hit(r, 0, 100, rec)){
+        auto t = rec.t;
+        vec3 normal = r.ray_at(t) - s1.center;
         normal = normal.normalize();
-        return vec3({normal.x+1, normal.y+1, normal.z+1})/2;
+        return vec3({normal.x + 1, normal.y + 1, normal.z + 1}) / 2;
     }
     vec3 unit_dir = r.dir.normalize();
     // vec3 c1 = {0.1f, 0.5f, 1.0f};
     // vec3 c2 = {0.3f, 0.2f, 0.8f};
-    vec3 c1 = {0.1f, 0.05f, 1.0f};
-    vec3 c2 = {0.1f, 1.0f, 0.08f};
-    t = 0.5 * (unit_dir.y + 1);
+    vec3 c2 = {0.1f, 0.05f, 1.0f};
+    vec3 c1 = {0.1f, 1.0f, 0.08f};
+    auto t = 0.5 * (unit_dir.y + 1);
     vec3 color = c1 * t + c2 * (1 - t);
     return color;
 }

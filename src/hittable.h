@@ -3,8 +3,10 @@
 
 #include "ray.h"
 
+class hittable;
+
 struct hit_record {
-    hittable& hit_object;
+    hittable *hit_object;
     vec3 p;
     double t;
 };

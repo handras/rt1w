@@ -9,7 +9,7 @@ public:
     vec3 dir;
 
 public:
-    vec3 ray_at(double t);
+    vec3 ray_at(double t) const;
 };
 
 

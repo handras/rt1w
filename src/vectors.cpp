@@ -2,16 +2,16 @@
 
 #include "vectors.h"
 
-double vec3::length() {
+double vec3::length() const {
     return sqrt(this->length_squared());
 }
 
-double vec3::length_squared() {
+double vec3::length_squared() const {
 
     return this->x * this->x + this->y * this->y + this->z * this->z;
 }
 
-vec3 vec3::normalize() {
+vec3 vec3::normalize() const {
     double l = this->length();
     vec3 r = *this / l;
     return r;
