@@ -5,7 +5,7 @@ project(RT1W)
 
 include_directories(D:/progik/c_libraries/SDL2-devel-2.0.18-mingw/x86_64-w64-mingw32/include/SDL2
         D:/progik/c_libraries/cmocka-1.1.5/include
-        src
+        include
 )
 
 link_directories(D:/progik/c_libraries/SDL2-devel-2.0.18-mingw/x86_64-w64-mingw32/lib)
