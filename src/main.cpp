@@ -5,10 +5,14 @@
 
 #include "sphere.h"
 #include "scene.h"
+#include "camera.h"
+extern "C" {
+#include "bmp.h"
+}
 
 #define WIN_WIDTH 1080
 #define WIN_HEIGHT 720
-#define SUBSAMPLING 3
+#define SUBSAMPLING 1
 
 void showImage(SDL_Renderer *renderer, SDL_Texture *texture, uint8_t *pixels);
 void renderRaytracedImage(uint8_t *pixels);
@@ -22,7 +26,6 @@ int main(int argc, char **argv) {
     SDL_Window *window = SDL_CreateWindow("RTRenderer", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIN_WIDTH, WIN_HEIGHT, 0);
     if (window == NULL) {
         printf("Can't create window. Error is:\n%s", SDL_GetError());
-
     }
 
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
@@ -71,16 +74,8 @@ void showImage(SDL_Renderer *renderer, SDL_Texture *texture, uint8_t *pixels) {
 }
 
 void renderRaytracedImage(uint8_t *pixels) {
-    float aspect_ratio = (float)WIN_WIDTH / WIN_HEIGHT;
     // Camera
-    float viewport_height = 2.0;
-    float viewport_width = aspect_ratio * viewport_height;
-    float focal_length = 1.0;
-    vec3 origin = {0, 0, 0};
-    vec3 horizontal = {viewport_width, 0, 0};
-    vec3 vertical = {0, viewport_height, 0};
-    vec3 lower_left_corner = origin - horizontal / 2 - vertical / 2 - vec3({0, 0, focal_length});
-
+    auto cam = camera((float)WIN_WIDTH / WIN_HEIGHT);
     scene s = create_scene();
 
     printf("Starting render... \n");
@@ -92,12 +87,11 @@ void renderRaytracedImage(uint8_t *pixels) {
                 for (int l = 0; l < SUBSAMPLING; l++) {
                     double u = (double)(i + (k / 3.0)) / (WIN_WIDTH - 1);
                     double v = (double)(j + (l / 3.0)) / (WIN_HEIGHT - 1);
-                    vec3 dir = lower_left_corner + horizontal * u + vertical * v - origin;
-                    ray r{origin, dir};
+                    ray r = cam.get_ray(u, v);
                     pixel_color += ray_color(r, s);
                 }
             }
-            pixel_color = pixel_color / (float)(SUBSAMPLING*SUBSAMPLING);
+            pixel_color = pixel_color / (float)(SUBSAMPLING * SUBSAMPLING);
             pixels[((WIN_HEIGHT - 1 - j) * WIN_WIDTH + i) * 4 + 0] = pixel_color.r * 255.99f;
             pixels[((WIN_HEIGHT - 1 - j) * WIN_WIDTH + i) * 4 + 1] = pixel_color.g * 255.99f;
             pixels[((WIN_HEIGHT - 1 - j) * WIN_WIDTH + i) * 4 + 2] = pixel_color.b * 255.99f;
@@ -105,6 +99,9 @@ void renderRaytracedImage(uint8_t *pixels) {
         }
     }
     printf("\nFinished!\n");
+    printf("Saving image...\n");
+    generateBitmapImage(pixels, WIN_HEIGHT, WIN_WIDTH, "generated_image.bmp");
+    printf("Saved!\n");
 }
 
 vec3 ray_color(ray r, scene &s) {
@@ -127,7 +124,7 @@ vec3 ray_color(ray r, scene &s) {
 
 scene create_scene() {
     auto s1 = new sphere(vec3({0, 0, -1.0}), 0.5);
-    auto s2 = new sphere(vec3({0, 0, -0.5}), 0.3);
+    auto s2 = new sphere(vec3({-0.5, 0, -1.25}), 0.3);
     auto s3 = new sphere(vec3({0, -100.5, -1.0}), 100);
     scene s;
     s.add(*s1);
