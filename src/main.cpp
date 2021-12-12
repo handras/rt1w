@@ -6,8 +6,9 @@
 #include "sphere.h"
 #include "scene.h"
 
-#define WIN_WIDTH 800
-#define WIN_HEIGHT 600
+#define WIN_WIDTH 1080
+#define WIN_HEIGHT 720
+#define SUBSAMPLING 3
 
 void showImage(SDL_Renderer *renderer, SDL_Texture *texture, uint8_t *pixels);
 void renderRaytracedImage(uint8_t *pixels);
@@ -19,24 +20,25 @@ int main(int argc, char **argv) {
     printf("Hello Andras!\n");
     SDL_Init(SDL_INIT_VIDEO);
     SDL_Window *window = SDL_CreateWindow("RTRenderer", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, WIN_WIDTH, WIN_HEIGHT, 0);
+    if (window == NULL) {
+        printf("Can't create window. Error is:\n%s", SDL_GetError());
+
+    }
+
     SDL_Renderer *renderer = SDL_CreateRenderer(window, -1, 0);
+    if (renderer == NULL) {
+        printf("Can't create renderer. Error is:\n%s", SDL_GetError());
+    }
     SDL_Texture *texture = SDL_CreateTexture(renderer,
                                              SDL_PIXELFORMAT_RGBA32,
                                              SDL_TEXTUREACCESS_STREAMING,
                                              WIN_WIDTH,
                                              WIN_HEIGHT);
-
-    uint8_t pixels[WIN_WIDTH * WIN_HEIGHT * 4] = {0};
-    for (size_t i = 0; i < WIN_WIDTH; i++) {
-        for (size_t j = 0; j < WIN_HEIGHT; j++) {
-            pixels[(j * WIN_WIDTH + i) * 4 + 0] = (3 * i < WIN_WIDTH) ? 20 : ((float)3 / 2 * i < WIN_WIDTH) ? 128
-                                                                                                            : 220;
-            pixels[(j * WIN_WIDTH + i) * 4 + 1] = (3 * j < WIN_HEIGHT) ? 20 : ((float)3 / 2 * j < WIN_HEIGHT) ? 128
-                                                                                                              : 220;
-            pixels[(j * WIN_WIDTH + i) * 4 + 2] = (j + i) > (WIN_WIDTH * j + i) % 9 ? 180 : 0;
-            pixels[(j * WIN_WIDTH + i) * 4 + 3] = 255;
-        }
+    if (texture == NULL) {
+        printf("Can't create texture. Error is:\n%s", SDL_GetError());
     }
+
+    uint8_t *pixels = new uint8_t[WIN_WIDTH * WIN_HEIGHT * 4];
 
     renderRaytracedImage(pixels);
 
@@ -85,15 +87,21 @@ void renderRaytracedImage(uint8_t *pixels) {
     for (int j = WIN_HEIGHT - 1; j >= 0; --j) {
         printf("Scanlines remaining: %d\t\t\r", j);
         for (int i = 0; i < WIN_WIDTH; ++i) {
-            double u = (double)(i) / (WIN_WIDTH - 1);
-            double v = (double)(j) / (WIN_HEIGHT - 1);
-            vec3 dir = lower_left_corner + horizontal * u + vertical * v - origin;
-            ray r{origin, dir};
-            vec3 pixel_color = ray_color(r, s);
-            pixels[((WIN_HEIGHT -1 - j) * WIN_WIDTH + i) * 4 + 0] = pixel_color.r * 255.99f;
-            pixels[((WIN_HEIGHT -1- j) * WIN_WIDTH + i) * 4 + 1] = pixel_color.g * 255.99f;
-            pixels[((WIN_HEIGHT -1- j) * WIN_WIDTH + i) * 4 + 2] = pixel_color.b * 255.99f;
-            pixels[(j * WIN_WIDTH + i) * 4 + 3] = 255;
+            vec3 pixel_color = vec3({0, 0, 0});
+            for (int k = 0; k < SUBSAMPLING; k++) {
+                for (int l = 0; l < SUBSAMPLING; l++) {
+                    double u = (double)(i + (k / 3.0)) / (WIN_WIDTH - 1);
+                    double v = (double)(j + (l / 3.0)) / (WIN_HEIGHT - 1);
+                    vec3 dir = lower_left_corner + horizontal * u + vertical * v - origin;
+                    ray r{origin, dir};
+                    pixel_color += ray_color(r, s);
+                }
+            }
+            pixel_color = pixel_color / (float)(SUBSAMPLING*SUBSAMPLING);
+            pixels[((WIN_HEIGHT - 1 - j) * WIN_WIDTH + i) * 4 + 0] = pixel_color.r * 255.99f;
+            pixels[((WIN_HEIGHT - 1 - j) * WIN_WIDTH + i) * 4 + 1] = pixel_color.g * 255.99f;
+            pixels[((WIN_HEIGHT - 1 - j) * WIN_WIDTH + i) * 4 + 2] = pixel_color.b * 255.99f;
+            pixels[((WIN_HEIGHT - 1 - j) * WIN_WIDTH + i) * 4 + 3] = 255;
         }
     }
     printf("\nFinished!\n");

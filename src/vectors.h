@@ -18,6 +18,13 @@ typedef union vec3 {
         return r;
     }
 
+    vec3 &operator+=(const vec3 &u) {
+        x += u.x;
+        y += u.y;
+        z += u.z;
+        return *this;
+    }
+
     vec3 operator-(const vec3 &u) const {
         vec3 r = {this->x - u.x, this->y - u.y, this->z - u.z};
         return r;
