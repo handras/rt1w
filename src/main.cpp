@@ -6,20 +6,24 @@
 #include "sphere.h"
 #include "scene.h"
 #include "camera.h"
+#include "rand_utils.h"
 extern "C" {
 #include "bmp.h"
 }
 
 #define WIN_WIDTH 1080
 #define WIN_HEIGHT 720
-#define SUBSAMPLING 2
+#define SUBSAMPLING 11
 #define fSUBSAMPLING (float)(SUBSAMPLING)
+
+#define EPSILON 0.00002
+#define MAXDETH 10
 
 void showImage(SDL_Renderer *renderer, SDL_Texture *texture, uint8_t *pixels);
 void renderRaytracedImage(uint8_t *pixels);
 void cleanUp();
 scene create_scene();
-vec3 ray_color(ray, scene &);
+vec3 ray_color(ray, scene &, int);
 
 int main(int argc, char **argv) {
     printf("Hello Andras!\n");
@@ -89,14 +93,14 @@ void renderRaytracedImage(uint8_t *pixels) {
                     double u = (double)(i + (k / fSUBSAMPLING)) / (WIN_WIDTH - 1);
                     double v = (double)(j + (l / fSUBSAMPLING)) / (WIN_HEIGHT - 1);
                     ray r = cam.get_ray(u, v);
-                    pixel_color += ray_color(r, s);
+                    pixel_color += ray_color(r, s, MAXDETH);
                 }
             }
             pixel_color = pixel_color / (fSUBSAMPLING * fSUBSAMPLING);
             int pixel_index = ((WIN_HEIGHT - 1 - j) * WIN_WIDTH + i) * 4;
-            pixels[pixel_index + 0] = (pixel_color.r) * 255.999f;
-            pixels[pixel_index + 1] = (pixel_color.g) * 255.999f;
-            pixels[pixel_index + 2] = (pixel_color.b) * 255.999f;
+            pixels[pixel_index + 0] = sqrt(pixel_color.r) * 255.999f;
+            pixels[pixel_index + 1] = sqrt(pixel_color.g) * 255.999f;
+            pixels[pixel_index + 2] = sqrt(pixel_color.b) * 255.999f;
             pixels[pixel_index + 3] = 255;
         }
     }
@@ -106,22 +110,28 @@ void renderRaytracedImage(uint8_t *pixels) {
     printf("Saved!\n");
 }
 
-vec3 ray_color(ray r, scene &s) {
+vec3 ray_color(ray r, scene &s, int depth) {
     hit_record rec;
-    if (s.hit(r, 0, 10e8, rec)) {
+    if (depth <= 0)
+        return vec3({0, 0, 0});
+    if (s.hit(r, EPSILON, 10e8, rec)) { // scene
         auto t = rec.t;
         vec3 normal = rec.normal;
-        normal = normal.normalize();
-        return (normal + vec3({1, 1, 1})) / 2;
+        vec3 scatter_towards = rec.p + rec.normal + random_on_unit_sphere();
+        ray scatter_ray = {rec.p, scatter_towards - rec.p};
+        // normal = normal.normalize();
+        // return (normal + vec3({1, 1, 1})) / 2;
+        return ray_color(scatter_ray, s, depth-1);
+    } else { // background
+        vec3 unit_dir = r.dir.normalize();
+        // vec3 c1 = {0.1f, 0.5f, 1.0f};
+        // vec3 c2 = {0.3f, 0.2f, 0.8f};
+        vec3 c1 = {0.1f, 0.05f, 1.0f};
+        vec3 c2 = {0.1f, 1.0f, 0.08f};
+        auto t = 0.5 * (unit_dir.x + 1);
+        vec3 color = c1 * t + c2 * (1 - t);
+        return color;
     }
-    vec3 unit_dir = r.dir.normalize();
-    // vec3 c1 = {0.1f, 0.5f, 1.0f};
-    // vec3 c2 = {0.3f, 0.2f, 0.8f};
-    vec3 c1 = {0.1f, 0.05f, 1.0f};
-    vec3 c2 = {0.1f, 1.0f, 0.08f};
-    auto t = 0.5 * (unit_dir.y + 1);
-    vec3 color = c1 * t + c2 * (1 - t);
-    return color;
 }
 
 scene create_scene() {
