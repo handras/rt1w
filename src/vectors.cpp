@@ -31,3 +31,7 @@ vec3 cross(const vec3 &u, const vec3 &v) {
     };
     return r;
 }
+
+vec3 reflect(const vec3 &v, const vec3 &n) {
+    return v - n * 2 * dot(v, n);
+}

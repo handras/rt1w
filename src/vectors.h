@@ -60,5 +60,6 @@ vec3 cross(const vec3 &u, const vec3 &v);
 double vec3_length(vec3 *lh);
 double vec3_length_squared(vec3 *lh);
 vec3 vec3_unit(vec3 *lh);
+vec3 reflect(const vec3 &v, const vec3 &n);
 
 #endif // VECTORS_H

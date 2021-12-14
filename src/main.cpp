@@ -136,8 +136,9 @@ vec3 ray_color(ray r, scene &s, int depth) {
 
 scene create_scene() {
     auto mat1 = new lambertian(vec3({0.3f, 0.2f, 0.8f}));
+    auto mat2 = new metal(vec3({0.8f, 0.8f, 0.9f}));
     auto s1 = new sphere(vec3({0, 0, -1.0}), 0.5, mat1);
-    auto s2 = new sphere(vec3({-0.5, 0, -1.25}), 0.3, mat1);
+    auto s2 = new sphere(vec3({-1.5, 0, -1.5}), 0.49, mat2);
     auto s3 = new sphere(vec3({0, -100.5, -1.0}), 100, mat1);
     scene s;
     s.add(*s1);
