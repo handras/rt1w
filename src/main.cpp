@@ -13,11 +13,11 @@ extern "C" {
 
 #define WIN_WIDTH 1080
 #define WIN_HEIGHT 720
-#define SUBSAMPLING 11
-#define fSUBSAMPLING (float)(SUBSAMPLING)
+#define SUBSAMPLING 2
+#define MAXDETH 5
 
+#define fSUBSAMPLING (float)(SUBSAMPLING)
 #define EPSILON 0.00002
-#define MAXDETH 10
 
 void showImage(SDL_Renderer *renderer, SDL_Texture *texture, uint8_t *pixels);
 void renderRaytracedImage(uint8_t *pixels);
@@ -115,13 +115,13 @@ vec3 ray_color(ray r, scene &s, int depth) {
     if (depth <= 0)
         return vec3({0, 0, 0});
     if (s.hit(r, EPSILON, 10e8, rec)) { // scene
-        auto t = rec.t;
-        vec3 normal = rec.normal;
-        vec3 scatter_towards = rec.p + rec.normal + random_on_unit_sphere();
-        ray scatter_ray = {rec.p, scatter_towards - rec.p};
+        ray scattered;
+        vec3 attenuation;
+        if (rec.mat->scatter(r, rec, attenuation, scattered))
+            return attenuation * ray_color(scattered, s, depth - 1);
+        return vec3({0, 0, 0});
         // normal = normal.normalize();
         // return (normal + vec3({1, 1, 1})) / 2;
-        return ray_color(scatter_ray, s, depth-1);
     } else { // background
         vec3 unit_dir = r.dir.normalize();
         // vec3 c1 = {0.1f, 0.5f, 1.0f};
@@ -135,9 +135,10 @@ vec3 ray_color(ray r, scene &s, int depth) {
 }
 
 scene create_scene() {
-    auto s1 = new sphere(vec3({0, 0, -1.0}), 0.5);
-    auto s2 = new sphere(vec3({-0.5, 0, -1.25}), 0.3);
-    auto s3 = new sphere(vec3({0, -100.5, -1.0}), 100);
+    auto mat1 = new lambertian(vec3({0.3f, 0.2f, 0.8f}));
+    auto s1 = new sphere(vec3({0, 0, -1.0}), 0.5, mat1);
+    auto s2 = new sphere(vec3({-0.5, 0, -1.25}), 0.3, mat1);
+    auto s3 = new sphere(vec3({0, -100.5, -1.0}), 100, mat1);
     scene s;
     s.add(*s1);
     s.add(*s2);

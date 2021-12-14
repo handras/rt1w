@@ -4,10 +4,12 @@
 #include "ray.h"
 
 class hittable;
+class material;
 
 struct hit_record {
     vec3 p;
     vec3 normal;
+    material *mat;
     double t;
 };
 

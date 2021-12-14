@@ -23,6 +23,7 @@ bool sphere::hit(const ray &r, double t_min, double t_max, hit_record &rec) cons
     rec.t = root;
     rec.p = r.ray_at(rec.t);
     rec.normal = (rec.p - center) / radius;
+    rec.mat = material;
 
     return true;
 }
