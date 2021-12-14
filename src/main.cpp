@@ -12,7 +12,8 @@ extern "C" {
 
 #define WIN_WIDTH 1080
 #define WIN_HEIGHT 720
-#define SUBSAMPLING 1
+#define SUBSAMPLING 2
+#define fSUBSAMPLING (float)(SUBSAMPLING)
 
 void showImage(SDL_Renderer *renderer, SDL_Texture *texture, uint8_t *pixels);
 void renderRaytracedImage(uint8_t *pixels);
@@ -85,17 +86,18 @@ void renderRaytracedImage(uint8_t *pixels) {
             vec3 pixel_color = vec3({0, 0, 0});
             for (int k = 0; k < SUBSAMPLING; k++) {
                 for (int l = 0; l < SUBSAMPLING; l++) {
-                    double u = (double)(i + (k / 3.0)) / (WIN_WIDTH - 1);
-                    double v = (double)(j + (l / 3.0)) / (WIN_HEIGHT - 1);
+                    double u = (double)(i + (k / fSUBSAMPLING)) / (WIN_WIDTH - 1);
+                    double v = (double)(j + (l / fSUBSAMPLING)) / (WIN_HEIGHT - 1);
                     ray r = cam.get_ray(u, v);
                     pixel_color += ray_color(r, s);
                 }
             }
-            pixel_color = pixel_color / (float)(SUBSAMPLING * SUBSAMPLING);
-            pixels[((WIN_HEIGHT - 1 - j) * WIN_WIDTH + i) * 4 + 0] = pixel_color.r * 255.99f;
-            pixels[((WIN_HEIGHT - 1 - j) * WIN_WIDTH + i) * 4 + 1] = pixel_color.g * 255.99f;
-            pixels[((WIN_HEIGHT - 1 - j) * WIN_WIDTH + i) * 4 + 2] = pixel_color.b * 255.99f;
-            pixels[((WIN_HEIGHT - 1 - j) * WIN_WIDTH + i) * 4 + 3] = 255;
+            pixel_color = pixel_color / (fSUBSAMPLING * fSUBSAMPLING);
+            int pixel_index = ((WIN_HEIGHT - 1 - j) * WIN_WIDTH + i) * 4;
+            pixels[pixel_index + 0] = (pixel_color.r) * 255.999f;
+            pixels[pixel_index + 1] = (pixel_color.g) * 255.999f;
+            pixels[pixel_index + 2] = (pixel_color.b) * 255.999f;
+            pixels[pixel_index + 3] = 255;
         }
     }
     printf("\nFinished!\n");
