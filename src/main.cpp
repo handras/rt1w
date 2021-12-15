@@ -124,10 +124,15 @@ vec3 ray_color(ray r, scene &s, int depth) {
         // return (normal + vec3({1, 1, 1})) / 2;
     } else { // background
         vec3 unit_dir = r.dir.normalize();
-        // vec3 c1 = {0.1f, 0.5f, 1.0f};
-        // vec3 c2 = {0.3f, 0.2f, 0.8f};
-        vec3 c1 = {0.1f, 0.05f, 1.0f};
-        vec3 c2 = {0.1f, 1.0f, 0.08f};
+        // pastell
+        // vec3 c1 = {0.9f, 0.75f, 1.0f};
+        // vec3 c2 = {0.7f, 0.9f, 0.9f};
+        // white
+        vec3 c1 = {0.99f, 0.99f, 0.99f};
+        vec3 c2 = {0.99f, 0.99f, 0.99f};
+        // blue green
+        // vec3 c1 = {0.1f, 0.05f, 1.0f};
+        // vec3 c2 = {0.1f, 1.0f, 0.08f};
         auto t = 0.5 * (unit_dir.x + 1);
         vec3 color = c1 * t + c2 * (1 - t);
         return color;
@@ -136,14 +141,17 @@ vec3 ray_color(ray r, scene &s, int depth) {
 
 scene create_scene() {
     auto mat1 = new lambertian(vec3({0.3f, 0.2f, 0.8f}));
-    auto mat2 = new metal(vec3({0.8f, 0.8f, 0.9f}));
+    auto mat_silver = new metal(vec3({0.8f, 0.8f, 0.9f}));
+    auto mat_gold = new metal(vec3({0.828125f, 0.683593f, 0.2148439f}));
     auto s1 = new sphere(vec3({0, 0, -1.0}), 0.5, mat1);
-    auto s2 = new sphere(vec3({-1.5, 0, -1.5}), 0.49, mat2);
-    auto s3 = new sphere(vec3({0, -100.5, -1.0}), 100, mat1);
+    auto s2 = new sphere(vec3({-1.5, 0, -1.2}), 0.49, mat_silver);
+    auto s3 = new sphere(vec3({1.5, 0, -1.2}), 0.49, mat_gold);
+    auto s4 = new sphere(vec3({0, -100.5, -1.0}), 100, mat1);
     scene s;
     s.add(*s1);
     s.add(*s2);
     s.add(*s3);
+    s.add(*s4);
     return s;
 }
 
