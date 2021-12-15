@@ -2,6 +2,7 @@
 #include "math.h"
 #define SDL_MAIN_HANDLED
 #include "SDL.h"
+#include "SDL_thread.h"
 
 #include "sphere.h"
 #include "scene.h"
@@ -11,6 +12,8 @@ extern "C" {
 #include "bmp.h"
 }
 
+#include "main.h"
+
 #define WIN_WIDTH 1080
 #define WIN_HEIGHT 720
 #define SUBSAMPLING 2
@@ -18,12 +21,6 @@ extern "C" {
 
 #define fSUBSAMPLING (float)(SUBSAMPLING)
 #define EPSILON 0.00002
-
-void showImage(SDL_Renderer *renderer, SDL_Texture *texture, uint8_t *pixels);
-void renderRaytracedImage(uint8_t *pixels);
-void cleanUp();
-scene create_scene();
-vec3 ray_color(ray, scene &, int);
 
 int main(int argc, char **argv) {
     printf("Hello Andras!\n");
@@ -46,16 +43,25 @@ int main(int argc, char **argv) {
         printf("Can't create texture. Error is:\n%s", SDL_GetError());
     }
 
+    SDL_Event render_ready_event;
+    render_ready_event.type = SDL_RegisterEvents(1);
+
     uint8_t *pixels = new uint8_t[WIN_WIDTH * WIN_HEIGHT * 4];
 
-    renderRaytracedImage(pixels);
+    render_fn_data data;
+    data.event = &render_ready_event;
+    data.pixels = pixels;
 
-    showImage(renderer, texture, pixels);
+    SDL_CreateThread(render_wrapper, "image_renderer", (void *)&data);
+
     SDL_Event event;
     while (1) {
         if (SDL_WaitEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 break;
+            }
+            if (event.type == render_ready_event.type) {
+                showImage(renderer, texture, pixels);
             }
         }
     }
@@ -76,6 +82,13 @@ void showImage(SDL_Renderer *renderer, SDL_Texture *texture, uint8_t *pixels) {
     SDL_RenderClear(renderer);
     SDL_RenderCopy(renderer, texture, NULL, NULL);
     SDL_RenderPresent(renderer);
+}
+
+int render_wrapper(void *data) {
+    render_fn_data *d = (render_fn_data *)data;
+    renderRaytracedImage(d->pixels);
+    SDL_PushEvent(d->event);
+    return 0;
 }
 
 void renderRaytracedImage(uint8_t *pixels) {
